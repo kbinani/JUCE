@@ -1438,7 +1438,7 @@ public:
         {
             switch (type)
             {
-                case GUIApp:            return "$(HOME)/Applications";
+                case GUIApp:            return "/Applications";
                 case ConsoleApp:        return "/usr/bin";
                 case VSTPlugIn:         return config.isPluginBinaryCopyStepEnabled() ? config.getVSTBinaryLocationString() : String();
                 case VST3PlugIn:        return config.isPluginBinaryCopyStepEnabled() ? config.getVST3BinaryLocationString() : String();
