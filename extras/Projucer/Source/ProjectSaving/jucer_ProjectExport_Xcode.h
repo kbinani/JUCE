@@ -2469,10 +2469,7 @@ private:
         mo << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << newLine
            << "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">" << newLine
            << "<plist version=\"1.0\">"                    << newLine
-           << "<dict>"                                     << newLine
-           << "\t" << "<key>BuildSystemType</key>"         << newLine
-           << "\t" << "<string>Original</string>"          << newLine
-           << "</dict>"                                    << newLine
+           << "<dict/>"                                    << newLine
            << "</plist>"                                   << newLine;
 
         overwriteFileIfDifferentOrThrow (settingsFile, mo);
