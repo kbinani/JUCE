@@ -64,7 +64,8 @@ public:
         useTreeView                     = 32,   /**< specifies that a tree-view should be shown instead of a file list. */
         filenameBoxIsReadOnly           = 64,   /**< specifies that the user can't type directly into the filename box. */
         warnAboutOverwriting            = 128,  /**< specifies that the dialog should warn about overwriting existing files (if possible). */
-        doNotClearFileNameOnRootChange  = 256   /**< specifies that the file name should not be cleared upon root change. */
+        doNotClearFileNameOnRootChange  = 256,  /**< specifies that the file name should not be cleared upon root change. */
+        showsHiddenFiles                = 512
     };
 
     //==============================================================================
