@@ -81,6 +81,7 @@ public:
 
         [panel setTitle: juceStringToNS (owner.title)];
         [panel setAllowedFileTypes: createAllowedTypesArray (filters)];
+        panel.showsHiddenFiles = ((flags & FileBrowserComponent::showsHiddenFiles) != 0);
 
         if (! isSave)
         {
