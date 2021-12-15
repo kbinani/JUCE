@@ -131,6 +131,7 @@ public:
     void saveDocumentAsync (const File& file, std::function<void (Result)> callback) override;
 
     void saveProject (Async, ProjectExporter* exporterToSave, std::function<void (Result)> onCompletion);
+    void saveAndMoveTemporaryProject (bool openInIDE);
     Result saveResourcesOnly();
     void openProjectInIDE (ProjectExporter& exporterToOpen);
 
@@ -209,8 +210,14 @@ public:
     bool shouldDisplaySplashScreen() const               { return displaySplashScreenValue.get(); }
     String getSplashScreenColourString() const           { return splashScreenColourValue.get(); }
 
-    static StringArray getCppStandardStrings()           { return { "C++14", "C++17", "Use Latest" }; }
-    static Array<var> getCppStandardVars()               { return { "14",    "17",    "latest" }; }
+    static StringArray getCppStandardStrings()           { return { "C++14", "C++17", "C++20", "Use Latest" }; }
+    static Array<var> getCppStandardVars()               { return { "14",    "17",    "20",    "latest" }; }
+
+    static String getLatestNumberedCppStandardString()
+    {
+        auto cppStandardVars = getCppStandardVars();
+        return cppStandardVars[cppStandardVars.size() - 2];
+    }
 
     String getCppStandardString() const                  { return cppStandardValue.get(); }
 
@@ -570,8 +577,6 @@ private:
     //==============================================================================
     File tempDirectory;
     std::pair<Time, String> cachedFileState;
-
-    void saveAndMoveTemporaryProject (bool openInIDE);
 
     //==============================================================================
     friend class Item;

@@ -126,7 +126,12 @@ public:
 
     bool launchProject() override
     {
-        return getCLionExecutableOrApp().startAsProcess (getTargetFolder().getFullPathName().quoted());
+        return getCLionExecutableOrApp().startAsProcess (getIDEProjectFile().getFullPathName().quoted());
+    }
+
+    File getIDEProjectFile() const override
+    {
+        return getTargetFolder();
     }
 
     String getDescription() override
@@ -542,7 +547,7 @@ private:
                 auto cxxStandard = project.getCppStandardString();
 
                 if (cxxStandard == "latest")
-                    cxxStandard = "17";
+                    cxxStandard = project.getLatestNumberedCppStandardString();
 
                 out << "    CXX_STANDARD " << cxxStandard << newLine;
 
@@ -608,7 +613,7 @@ private:
 
             String cxxFlags;
 
-            for (auto& flag : exporter.getCXXFlags())
+            for (auto& flag : exporter.getCXXFlags (config))
                 if (! flag.startsWith ("-std="))
                     cxxFlags += " " + flag;
 
@@ -671,7 +676,7 @@ private:
                 auto cxxStandard = project.getCppStandardString();
 
                 if (cxxStandard == "latest")
-                    cxxStandard = "17";
+                    cxxStandard = project.getLatestNumberedCppStandardString();
 
                 out << "    CXX_STANDARD " << cxxStandard << newLine;
 
@@ -1076,7 +1081,7 @@ private:
                 auto cxxStandard = project.getCppStandardString();
 
                 if (cxxStandard == "latest")
-                    cxxStandard = "17";
+                    cxxStandard = project.getLatestNumberedCppStandardString();
 
                 out << "    CXX_STANDARD " << cxxStandard << newLine;
 

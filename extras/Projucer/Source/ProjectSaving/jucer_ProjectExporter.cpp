@@ -38,20 +38,28 @@
 #include "../Utility/UI/PropertyComponents/jucer_FilePathPropertyComponent.h"
 
 //==============================================================================
+static auto createIcon (const void* iconData, size_t iconDataSize)
+{
+    Image image (Image::ARGB, 200, 200, true);
+    Graphics g (image);
+
+    std::unique_ptr<Drawable> svgDrawable (Drawable::createFromImageData (iconData, iconDataSize));
+    svgDrawable->drawWithin (g, image.getBounds().toFloat(), RectanglePlacement::fillDestination, 1.0f);
+
+    return image;
+}
+
+template <typename Exporter>
+static ProjectExporter::ExporterTypeInfo createExporterTypeInfo (const void* iconData, size_t iconDataSize)
+{
+    return { Exporter::getValueTreeTypeName(),
+             Exporter::getDisplayName(),
+             Exporter::getTargetFolderName(),
+             createIcon (iconData, iconDataSize) };
+}
+
 std::vector<ProjectExporter::ExporterTypeInfo> ProjectExporter::getExporterTypeInfos()
 {
-    auto createIcon = [] (const void* iconData, size_t iconDataSize)
-    {
-        Image image (Image::ARGB, 200, 200, true);
-        Graphics g (image);
-
-        std::unique_ptr<Drawable> svgDrawable (Drawable::createFromImageData (iconData, iconDataSize));
-
-        svgDrawable->drawWithin (g, image.getBounds().toFloat(), RectanglePlacement::fillDestination, 1.0f);
-
-        return image;
-    };
-
     using namespace BinaryData;
 
     static std::vector<ProjectExporter::ExporterTypeInfo> infos
@@ -65,28 +73,14 @@ std::vector<ProjectExporter::ExporterTypeInfo> ProjectExporter::getExporterTypeI
           XcodeProjectExporter::getTargetFolderNameiOS(),
           createIcon (export_xcode_svg, (size_t) export_xcode_svgSize) },
 
-        { MSVCProjectExporterVC2019::getValueTreeTypeName(),
-          MSVCProjectExporterVC2019::getDisplayName(),
-          MSVCProjectExporterVC2019::getTargetFolderName(),
-          createIcon (export_visualStudio_svg, export_visualStudio_svgSize) },
-        { MSVCProjectExporterVC2017::getValueTreeTypeName(),
-          MSVCProjectExporterVC2017::getDisplayName(),
-          MSVCProjectExporterVC2017::getTargetFolderName(),
-          createIcon (export_visualStudio_svg, export_visualStudio_svgSize) },
-        { MSVCProjectExporterVC2015::getValueTreeTypeName(),
-          MSVCProjectExporterVC2015::getDisplayName(),
-          MSVCProjectExporterVC2015::getTargetFolderName(),
-          createIcon (export_visualStudio_svg, export_visualStudio_svgSize) },
+        createExporterTypeInfo<MSVCProjectExporterVC2022> (export_visualStudio_svg, export_visualStudio_svgSize),
+        createExporterTypeInfo<MSVCProjectExporterVC2019> (export_visualStudio_svg, export_visualStudio_svgSize),
+        createExporterTypeInfo<MSVCProjectExporterVC2017> (export_visualStudio_svg, export_visualStudio_svgSize),
+        createExporterTypeInfo<MSVCProjectExporterVC2015> (export_visualStudio_svg, export_visualStudio_svgSize),
 
-        { MakefileProjectExporter::getValueTreeTypeName(),
-          MakefileProjectExporter::getDisplayName(),
-          MakefileProjectExporter::getTargetFolderName(),
-          createIcon (export_linux_svg, export_linux_svgSize) },
+        createExporterTypeInfo<MakefileProjectExporter> (export_linux_svg, export_linux_svgSize),
 
-        { AndroidProjectExporter::getValueTreeTypeName(),
-          AndroidProjectExporter::getDisplayName(),
-          AndroidProjectExporter::getTargetFolderName(),
-          createIcon (export_android_svg, export_android_svgSize) },
+        createExporterTypeInfo<AndroidProjectExporter> (export_android_svg, export_android_svgSize),
 
         { CodeBlocksProjectExporter::getValueTreeTypeNameWindows(),
           CodeBlocksProjectExporter::getDisplayNameWindows(),
@@ -97,10 +91,7 @@ std::vector<ProjectExporter::ExporterTypeInfo> ProjectExporter::getExporterTypeI
           CodeBlocksProjectExporter::getTargetFolderNameLinux(),
           createIcon (export_codeBlocks_svg, export_codeBlocks_svgSize) },
 
-        { CLionProjectExporter::getValueTreeTypeName(),
-          CLionProjectExporter::getDisplayName(),
-          CLionProjectExporter::getTargetFolderName(),
-          createIcon (export_clion_svg, export_clion_svgSize) }
+        createExporterTypeInfo<CLionProjectExporter> (export_clion_svg, export_clion_svgSize)
     };
 
     return infos;
@@ -110,13 +101,8 @@ ProjectExporter::ExporterTypeInfo ProjectExporter::getTypeInfoForExporter (const
 {
     auto typeInfos = getExporterTypeInfos();
 
-    auto predicate = [exporterIdentifier] (const ProjectExporter::ExporterTypeInfo& info)
-    {
-        return info.identifier == exporterIdentifier;
-    };
-
     auto iter = std::find_if (typeInfos.begin(), typeInfos.end(),
-                              std::move (predicate));
+                              [exporterIdentifier] (const ProjectExporter::ExporterTypeInfo& info) { return info.identifier == exporterIdentifier; });
 
     if (iter != typeInfos.end())
         return *iter;
@@ -130,7 +116,7 @@ ProjectExporter::ExporterTypeInfo ProjectExporter::getCurrentPlatformExporterTyp
     #if JUCE_MAC
      return ProjectExporter::getTypeInfoForExporter (XcodeProjectExporter::getValueTreeTypeNameMac());
     #elif JUCE_WINDOWS
-     return ProjectExporter::getTypeInfoForExporter (MSVCProjectExporterVC2019::getValueTreeTypeName());
+     return ProjectExporter::getTypeInfoForExporter (MSVCProjectExporterVC2022::getValueTreeTypeName());
     #elif JUCE_LINUX || JUCE_BSD
      return ProjectExporter::getTypeInfoForExporter (MakefileProjectExporter::getValueTreeTypeName());
     #else
@@ -149,21 +135,35 @@ std::unique_ptr<ProjectExporter> ProjectExporter::createNewExporter (Project& pr
     return exporter;
 }
 
+template <typename T> struct Tag {};
+
+static std::unique_ptr<ProjectExporter> tryCreatingExporter (Project&, const ValueTree&) { return nullptr; }
+
+template <typename Exporter, typename... Exporters>
+static std::unique_ptr<ProjectExporter> tryCreatingExporter (Project& project,
+                                                             const ValueTree& settings,
+                                                             Tag<Exporter>,
+                                                             Tag<Exporters>... exporters)
+{
+    if (auto* exporter = Exporter::createForSettings (project, settings))
+        return rawToUniquePtr (exporter);
+
+    return tryCreatingExporter (project, settings, exporters...);
+}
+
 std::unique_ptr<ProjectExporter> ProjectExporter::createExporterFromSettings (Project& project, const ValueTree& settings)
 {
-    std::unique_ptr<ProjectExporter> exporter;
-
-    exporter.reset (XcodeProjectExporter::createForSettings (project, settings));
-    if (exporter == nullptr) exporter.reset (MSVCProjectExporterVC2019::createForSettings (project, settings));
-    if (exporter == nullptr) exporter.reset (MSVCProjectExporterVC2017::createForSettings (project, settings));
-    if (exporter == nullptr) exporter.reset (MSVCProjectExporterVC2015::createForSettings (project, settings));
-    if (exporter == nullptr) exporter.reset (MakefileProjectExporter::createForSettings (project, settings));
-    if (exporter == nullptr) exporter.reset (AndroidProjectExporter::createForSettings (project, settings));
-    if (exporter == nullptr) exporter.reset (CodeBlocksProjectExporter::createForSettings (project, settings));
-    if (exporter == nullptr) exporter.reset (CLionProjectExporter::createForSettings (project, settings));
-
-    jassert (exporter != nullptr);
-    return exporter;
+    return tryCreatingExporter (project,
+                                settings,
+                                Tag<XcodeProjectExporter>{},
+                                Tag<MSVCProjectExporterVC2022>{},
+                                Tag<MSVCProjectExporterVC2019>{},
+                                Tag<MSVCProjectExporterVC2017>{},
+                                Tag<MSVCProjectExporterVC2015>{},
+                                Tag<MakefileProjectExporter>{},
+                                Tag<AndroidProjectExporter>{},
+                                Tag<CodeBlocksProjectExporter>{},
+                                Tag<CLionProjectExporter>{});
 }
 
 bool ProjectExporter::canProjectBeLaunched (Project* project)
@@ -176,6 +176,7 @@ bool ProjectExporter::canProjectBeLaunched (Project* project)
              XcodeProjectExporter::getValueTreeTypeNameMac(),
              XcodeProjectExporter::getValueTreeTypeNameiOS(),
             #elif JUCE_WINDOWS
+             MSVCProjectExporterVC2022::getValueTreeTypeName(),
              MSVCProjectExporterVC2019::getValueTreeTypeName(),
              MSVCProjectExporterVC2017::getValueTreeTypeName(),
              MSVCProjectExporterVC2015::getValueTreeTypeName(),
@@ -225,10 +226,7 @@ String ProjectExporter::getUniqueName() const
         return defaultBuildsRootFolder + info.targetFolder == targetLocationString;
     };
 
-    auto iter = std::find_if (typeInfos.begin(), typeInfos.end(),
-                              std::move (predicate));
-
-    if (iter == typeInfos.end())
+    if (std::none_of (typeInfos.begin(), typeInfos.end(), std::move (predicate)))
         return name + " - " + targetLocationString;
 
     return name;
@@ -861,22 +859,23 @@ ProjectExporter::BuildConfiguration::BuildConfiguration (Project& p, const Value
      usePrecompiledHeaderFileValue (config, Ids::usePrecompiledHeaderFile, getUndoManager(), false),
      precompiledHeaderFileValue    (config, Ids::precompiledHeaderFile,    getUndoManager())
 {
-    recommendedCompilerWarningFlags["LLVM"] = { "-Wall", "-Wshadow-all", "-Wshorten-64-to-32", "-Wstrict-aliasing", "-Wuninitialized", "-Wunused-parameter",
-        "-Wconversion", "-Wsign-compare", "-Wint-conversion", "-Wconditional-uninitialized", "-Woverloaded-virtual",
-        "-Wreorder", "-Wconstant-conversion", "-Wsign-conversion", "-Wunused-private-field", "-Wbool-conversion",
-        "-Wextra-semi", "-Wunreachable-code", "-Wzero-as-null-pointer-constant", "-Wcast-align",
-        "-Winconsistent-missing-destructor-override", "-Wshift-sign-overflow", "-Wnullable-to-nonnull-conversion",
-        "-Wno-missing-field-initializers", "-Wno-ignored-qualifiers",
-        "-Wswitch-enum"
-    };
-    recommendedCompilerWarningFlags["GCC"] = { "-Wall", "-Wextra", "-Wshadow", "-Wstrict-aliasing", "-Wuninitialized", "-Wunused-parameter", "-Wsign-compare",
-        "-Woverloaded-virtual", "-Wreorder", "-Wsign-conversion", "-Wunreachable-code",
-        "-Wzero-as-null-pointer-constant", "-Wcast-align", "-Wno-implicit-fallthrough",
-        "-Wno-maybe-uninitialized", "-Wno-missing-field-initializers", "-Wno-ignored-qualifiers",
-        "-Wswitch-enum", "-Wredundant-decls"
-    };
-    recommendedCompilerWarningFlags["GCC-7"] = recommendedCompilerWarningFlags["GCC"];
-    recommendedCompilerWarningFlags["GCC-7"].add ("-Wno-strict-overflow");
+    auto& llvmFlags = recommendedCompilerWarningFlags[CompilerNames::llvm] = BuildConfiguration::CompilerWarningFlags::getRecommendedForGCCAndLLVM();
+    llvmFlags.common.addArray ({
+        "-Wshorten-64-to-32", "-Wconversion", "-Wint-conversion",
+        "-Wconditional-uninitialized", "-Wconstant-conversion", "-Wbool-conversion",
+        "-Wextra-semi", "-Wshift-sign-overflow", "-Wno-missing-field-initializers",
+        "-Wshadow-all", "-Wnullable-to-nonnull-conversion"
+    });
+    llvmFlags.cpp.addArray ({
+        "-Wunused-private-field", "-Winconsistent-missing-destructor-override"
+    });
+
+    auto& gccFlags = recommendedCompilerWarningFlags[CompilerNames::gcc] = BuildConfiguration::CompilerWarningFlags::getRecommendedForGCCAndLLVM();
+    gccFlags.common.addArray ({
+        "-Wextra", "-Wsign-compare", "-Wno-implicit-fallthrough", "-Wno-maybe-uninitialized",
+        "-Wno-missing-field-initializers", "-Wredundant-decls", "-Wno-strict-overflow",
+        "-Wshadow"
+    });
 }
 
 ProjectExporter::BuildConfiguration::~BuildConfiguration()
@@ -911,8 +910,8 @@ void ProjectExporter::BuildConfiguration::addGCCOptimisationProperty (PropertyLi
 void ProjectExporter::BuildConfiguration::addRecommendedLinuxCompilerWarningsProperty (PropertyListBuilder& props)
 {
     props.add (new ChoicePropertyComponent (recommendedWarningsValue, "Add Recommended Compiler Warning Flags",
-                                            { "GCC", "GCC 7 and below", "LLVM", "Disabled" },
-                                            { "GCC", "GCC-7", "LLVM", "" }),
+                                            { CompilerNames::gcc, CompilerNames::llvm, "Disabled" },
+                                            { CompilerNames::gcc, CompilerNames::llvm, "" }),
                "Enable this to add a set of recommended compiler warning flags.");
     recommendedWarningsValue.setDefault ("");
 }
@@ -920,15 +919,19 @@ void ProjectExporter::BuildConfiguration::addRecommendedLinuxCompilerWarningsPro
 void ProjectExporter::BuildConfiguration::addRecommendedLLVMCompilerWarningsProperty (PropertyListBuilder& props)
 {
     props.add (new ChoicePropertyComponent (recommendedWarningsValue, "Add Recommended Compiler Warning Flags",
-                                            { "Enabled", "Disabled" },
-                                            { "LLVM", "" }),
+                                            { "Enabled",           "Disabled" },
+                                            { CompilerNames::llvm, "" }),
                "Enable this to add a set of recommended compiler warning flags.");
     recommendedWarningsValue.setDefault ("");
 }
 
-StringArray ProjectExporter::BuildConfiguration::getRecommendedCompilerWarningFlags() const
+ProjectExporter::BuildConfiguration::CompilerWarningFlags ProjectExporter::BuildConfiguration::getRecommendedCompilerWarningFlags() const
 {
     auto label = recommendedWarningsValue.get().toString();
+
+    if (label == "GCC-7")
+        label = CompilerNames::gcc;
+
     auto it = recommendedCompilerWarningFlags.find (label);
 
     if (it != recommendedCompilerWarningFlags.end())
