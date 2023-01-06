@@ -424,7 +424,7 @@ public:
         SECURITY_ATTRIBUTES securityAtts = {};
         securityAtts.nLength = sizeof (securityAtts);
         securityAtts.bInheritHandle = TRUE;
-
+#if 0
         if (CreatePipe (&readPipe, &writePipe, &securityAtts, 0)
              && SetHandleInformation (readPipe, HANDLE_FLAG_INHERIT, 0))
         {
@@ -434,13 +434,13 @@ public:
             startupInfo.hStdOutput = (streamFlags & wantStdOut) != 0 ? writePipe : nullptr;
             startupInfo.hStdError  = (streamFlags & wantStdErr) != 0 ? writePipe : nullptr;
             startupInfo.dwFlags = STARTF_USESTDHANDLES;
-
             JUCE_BEGIN_IGNORE_WARNINGS_MSVC (6335)
             ok = CreateProcess (nullptr, const_cast<LPWSTR> (command.toWideCharPointer()),
                                 nullptr, nullptr, TRUE, CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT,
                                 nullptr, nullptr, &startupInfo, &processInfo) != FALSE;
             JUCE_END_IGNORE_WARNINGS_MSVC
         }
+#endif
     }
 
     ~ActiveProcess()
