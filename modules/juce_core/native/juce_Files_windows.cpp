@@ -1057,10 +1057,14 @@ bool DirectoryIterator::NativeIterator::next (String& filenameFound,
 //==============================================================================
 bool JUCE_CALLTYPE Process::openDocument (const String& fileName, const String& parameters)
 {
+#if 1
+    return false;
+#else
     HINSTANCE hInstance = ShellExecute (nullptr, nullptr, fileName.toWideCharPointer(),
                                         parameters.toWideCharPointer(), nullptr, SW_SHOWDEFAULT);
 
     return hInstance > (HINSTANCE) 32;
+#endif
 }
 
 void File::revealToUser() const
