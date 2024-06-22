@@ -206,9 +206,11 @@ static void checkGLError (const char* file, const int line)
         if (e == GL_NO_ERROR)
             break;
 
+#if 0 // Avoid runtime assertion by Main Thread Checker
         // if the peer is not valid then ignore errors
         if (! checkPeerIsValid (OpenGLContext::getCurrentContext()))
             continue;
+#endif
 
         DBG ("***** " << getGLErrorMessage (e) << "  at " << file << " : " << line);
         jassertfalse;
@@ -217,7 +219,9 @@ static void checkGLError (const char* file, const int line)
 
  #define JUCE_CHECK_OPENGL_ERROR checkGLError (__FILE__, __LINE__);
 #else
- #define JUCE_CHECK_OPENGL_ERROR ;
+ #if ! defined (JUCE_CHECK_OPENGL_ERROR)
+  #define JUCE_CHECK_OPENGL_ERROR ;
+ #endif
 #endif
 
 static void clearGLError() noexcept
