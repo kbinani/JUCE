@@ -107,6 +107,8 @@ public:
         [panel setAllowedFileTypes: createAllowedTypesArray (filters)];
         JUCE_END_IGNORE_DEPRECATION_WARNINGS
 
+        panel.showsHiddenFiles = ((flags & FileBrowserComponent::showsHiddenFiles) != 0);
+
         if (! isSave)
         {
             auto* openPanel = static_cast<NSOpenPanel*> (panel);
