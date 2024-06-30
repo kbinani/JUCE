@@ -227,6 +227,8 @@ private:
             return brackets;
         }();
 
+        static auto isNumber = [](BidiType type) { return contains({BidiType::an, BidiType::en}, type); };
+
         // N0:
         for (auto bracketRange : bracketRanges)
         {
@@ -234,7 +236,7 @@ private:
             const Span span { buffer.data() + bracketRange.getStart(), (size_t) bracketRange.getLength() };
             const auto strong = std::find_if (span.begin(), span.end(), [] (const UnicodeAnalysisPoint& atom)
             {
-                return isStrong (atom);
+                return isStrong (atom) || isNumber (atom.getBidiType());
             });
 
             if (strong != span.end())
@@ -288,7 +290,6 @@ private:
                     return end - 1;
                 }();
 
-                auto isNumber    = [] (BidiType type) { return contains ({ BidiType::an, BidiType::en }, type); };
                 const auto start = isNumber (prevBidiType) ? BidiType::rtl : prevBidiType;
                 const auto end   = isNumber (buffer[(size_t) endIndex].getBidiType()) ? BidiType::rtl : buffer[(size_t) endIndex].getBidiType();
 
