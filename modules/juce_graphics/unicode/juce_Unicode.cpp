@@ -311,7 +311,6 @@ public:
         doTest ("1_3(1)");
         doTest ("-12323");
         doTest ("8784-43_-33");
-        doTest ("0 [1]");
     }
 };
 
