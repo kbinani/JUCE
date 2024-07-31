@@ -362,6 +362,8 @@ public:
     /** You can assign a lambda to this callback object to have it called when the editor loses key focus. */
     std::function<void()> onFocusLost;
 
+    std::function<void()> onCaretPositionChange;
+
     //==============================================================================
     /** Returns the entire contents of the editor. */
     String getText() const;
