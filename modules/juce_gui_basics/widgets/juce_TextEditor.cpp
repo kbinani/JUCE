@@ -1394,7 +1394,12 @@ void TextEditor::moveCaret (const int newCaretPos)
     if (clamped == getCaretPosition())
         return;
 
-    caretPosition = clamped;
+    if (caretPosition != clamped) {
+      caretPosition = clamped;
+      if (onCaretPositionChange) {
+        onCaretPositionChange();
+      }
+    }
 
     if (hasKeyboardFocus (false))
         textHolder->restartTimer();
