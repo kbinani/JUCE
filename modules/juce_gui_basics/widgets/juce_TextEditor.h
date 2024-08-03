@@ -363,6 +363,8 @@ public:
     std::function<void()> onFocusLost;
 
     std::function<void()> onCaretPositionChange;
+  
+    std::function<void()> onSelectionChange;
 
     //==============================================================================
     /** Returns the entire contents of the editor. */
