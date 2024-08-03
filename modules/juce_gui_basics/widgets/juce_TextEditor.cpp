@@ -1323,6 +1323,9 @@ void TextEditor::setSelection (Range<int> newSelection) noexcept
     if (newSelection != selection)
     {
         selection = newSelection;
+        if (onSelectionChange) {
+            onSelectionChange();
+        }
 
         if (auto* handler = getAccessibilityHandler())
             handler->notifyAccessibilityEvent (AccessibilityEvent::textSelectionChanged);
