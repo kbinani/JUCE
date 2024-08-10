@@ -1334,6 +1334,8 @@ void TextEditor::setSelection (Range<int> newSelection) noexcept
 
 void TextEditor::returnPressed()    { postCommandMessage (TextEditorDefs::returnKeyMessageId); }
 void TextEditor::escapePressed()    { postCommandMessage (TextEditorDefs::escapeKeyMessageId); }
+Point<int> TextEditor::getViewPosition() const { return viewport->getViewPosition(); }
+
 
 void TextEditor::addListener (Listener* l)      { listeners.add (l); }
 void TextEditor::removeListener (Listener* l)   { listeners.remove (l); }

@@ -776,6 +776,8 @@ protected:
     /** Can be overridden to intercept escape key presses directly */
     virtual void escapePressed();
 
+    Point<int> getViewPosition() const;
+
 private:
     //==============================================================================
     JUCE_PUBLIC_IN_DLL_BUILD (class UniformTextSection)
