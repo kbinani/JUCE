@@ -169,6 +169,9 @@ public:
     */
     bool areScrollbarsShown() const noexcept                        { return scrollbarVisible; }
 
+    bool isHorizontalScrollBarShown() const noexcept;
+    bool isVerticalScrollBarShown() const noexcept;
+
     /** Changes the password character used to disguise the text.
 
         @param passwordCharacter    if this is not zero, this character will be used as a replacement

@@ -1029,6 +1029,16 @@ void TextEditor::setScrollbarsShown (bool shown)
     }
 }
 
+bool TextEditor::isHorizontalScrollBarShown() const noexcept
+{
+    return viewport->isHorizontalScrollBarShown();
+}
+
+bool TextEditor::isVerticalScrollBarShown() const noexcept
+{
+    return viewport->isVerticalScrollBarShown();
+}
+
 void TextEditor::setReadOnly (bool shouldBeReadOnly)
 {
     if (readOnly != shouldBeReadOnly)
