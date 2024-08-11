@@ -778,6 +778,8 @@ protected:
 
     Point<int> getViewPosition() const;
 
+    virtual int indexAtPosition(float x, float y) const;
+
 private:
     //==============================================================================
     JUCE_PUBLIC_IN_DLL_BUILD (class UniformTextSection)
@@ -869,7 +871,6 @@ private:
     void updateCaretPosition();
     void updateValueFromText();
     void textWasChangedByValue();
-    int indexAtPosition (float x, float y) const;
     int findWordBreakAfter (int position) const;
     int findWordBreakBefore (int position) const;
     bool moveCaretWithTransaction (int newPos, bool selecting);
