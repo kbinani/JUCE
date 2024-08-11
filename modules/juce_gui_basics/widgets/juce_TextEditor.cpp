@@ -2030,12 +2030,12 @@ bool TextEditor::moveCaretUp (bool selecting)
 
     const auto caretPos = (getCaretRectangle() - getTextOffset()).toFloat();
 
-    const auto newY = caretPos.getY() - 1.0f;
+    auto newY = caretPos.getY() - currentFont.getHeight() * lineSpacing;
 
     if (newY < 0.0f)
         return moveCaretToStartOfLine (selecting);
 
-    return moveCaretWithTransaction (indexAtPosition (caretPos.getX(), newY), selecting);
+    return moveCaretWithTransaction (indexAtPosition (caretPos.getX(), newY - 1.0f), selecting);
 }
 
 bool TextEditor::moveCaretDown (bool selecting)
@@ -2044,7 +2044,7 @@ bool TextEditor::moveCaretDown (bool selecting)
         return moveCaretToEndOfLine (selecting);
 
     const auto caretPos = (getCaretRectangle() - getTextOffset()).toFloat();
-    return moveCaretWithTransaction (indexAtPosition (caretPos.getX(), caretPos.getBottom() + 1.0f), selecting);
+    return moveCaretWithTransaction (indexAtPosition (caretPos.getX(), caretPos.getY() + currentFont.getHeight() * (1.0f + lineSpacing) + 1.0f), selecting);
 }
 
 bool TextEditor::pageUp (bool selecting)
