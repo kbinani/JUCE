@@ -649,8 +649,24 @@ public:
         {
             glEnable (GL_DEBUG_OUTPUT);
             glEnable (GL_DEBUG_OUTPUT_SYNCHRONOUS);
-            glDebugMessageCallback ([] (GLenum, GLenum type, GLuint, GLenum severity, GLsizei, const GLchar* message, const void*)
+            glDebugMessageCallback ([] (GLenum, GLenum type, GLuint, GLenum severity, GLsizei length, const GLchar* message, const void*)
             {
+                if (type == GL_DEBUG_TYPE_OTHER && severity == GL_DEBUG_SEVERITY_NOTIFICATION)
+                {
+                    std::string_view msg(message, length);
+                    if (msg.starts_with ("Buffer detailed info: Buffer object "))
+                    {
+                        if (msg.ends_with ("(bound to GL_ARRAY_BUFFER_ARB, usage hint is GL_STATIC_DRAW) will use VIDEO memory as the source for buffer object operations."))
+                        {
+                            return;
+                        }
+                        if (msg.ends_with ("(bound to GL_ELEMENT_ARRAY_BUFFER_ARB, usage hint is GL_STATIC_DRAW) will use VIDEO memory as the source for buffer object operations."))
+                        {
+                            return;
+                        }
+                    }
+                }
+
                 // This may reiterate issues that are also flagged by JUCE_CHECK_OPENGL_ERROR.
                 // The advantage of this callback is that it will catch *all* errors, even if we
                 // forget to check manually.
