@@ -331,6 +331,8 @@ struct CADisplayLinkDeleter
 @public
     UIViewComponentPeer* owner;
     id<UITextInputDelegate> delegate;
+    UIView *_inputView;
+    BOOL _inputViewCreated;
 }
 
 - (instancetype) initWithOwner: (UIViewComponentPeer*) owner;
@@ -1176,6 +1178,18 @@ static void postTraitChangeNotification (UITraitCollection* previousTraitCollect
 /** see https://developer.apple.com/library/archive/documentation/StringsTextFonts/Conceptual/TextAndWebiPhoneOS/LowerLevelText-HandlingTechnologies/LowerLevelText-HandlingTechnologies.html */
 @implementation JuceTextView
 
+- (UIView *)inputView {
+    if (_inputView == nullptr && owner != nullptr && !_inputViewCreated)
+    {
+        _inputViewCreated = YES;
+        TextInputTarget *target = owner->findCurrentTextInputTarget();
+        if (target != nullptr) {
+            _inputView = (UIView *)target->createInputViewUIView();
+        }
+    }
+    return _inputView;
+}
+
 - (TextInputTarget*) getTextInputTarget
 {
     if (owner != nullptr)
@@ -1189,6 +1203,8 @@ static void postTraitChangeNotification (UITraitCollection* previousTraitCollect
     [super init];
     owner = ownerIn;
     delegate = nil;
+    _inputView = nil;
+    _inputViewCreated = NO;
 
     // The frame must have a finite size, otherwise some accessibility events will be ignored
     self.frame = CGRectMake (0.0, 0.0, 1.0, 1.0);

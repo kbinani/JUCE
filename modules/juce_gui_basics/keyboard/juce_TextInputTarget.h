@@ -124,6 +124,10 @@ public:
         This may be ignored, depending on the capabilities of the OS.
     */
     virtual VirtualKeyboardType getKeyboardType()       { return textKeyboard; }
+
+#if JUCE_IOS
+    virtual void* createInputViewUIView() { return nullptr; }
+#endif
 };
 
 } // namespace juce
